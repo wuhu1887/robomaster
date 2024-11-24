@@ -1,0 +1,78 @@
+vision_ctrl.enable_detection(rm_define.vision_detection_marker) #turn on marker detection
+robot_ctrl.set_mode(rm_define.robot_mode_free)                  #set free mode
+gimbal_ctrl.set_rotate_speed(120)                               #set gimble rotate speed
+gun_ctrl.set_fire_count(2)                                      #set fire count
+led_ctrl.set_flash(rm_define.armor_all,10)                      #set flash frequency
+led_ctrl.set_top_led(rm_define.armor_top_all,0,125,200,rm_define.effect_always_on)
+led_ctrl.set_bottom_led(rm_define.armor_bottom_all,0,125,200,rm_define.effect_always_off)
+vision_ctrl.set_marker_detection_distance(3)
+
+
+
+up,down,left,right = rm_define.gimbal_up,rm_define.gimbal_down,rm_define.gimbal_left,rm_define.gimbal_right
+TargetPos = {}
+TargetList = [1,2,3,4,5] # <<------- shooting order
+
+
+
+#FUNCTIONS
+def storeList(tar):
+    led_ctrl.gun_led_on()
+    TargetPos[tar] = [gimbal_ctrl.get_axis_angle(rm_define.gimbal_axis_yaw),
+                        gimbal_ctrl.get_axis_angle(rm_define.gimbal_axis_pitch)]
+    led_ctrl.set_top_led(rm_define.armor_top_all,0,255,0,rm_define.effect_flash)
+    time.sleep(0.1)
+    led_ctrl.gun_led_off()
+    time.sleep(0.1)
+    led_ctrl.set_top_led(rm_define.armor_top_all,0,125,200,rm_define.effect_always_on)
+    
+
+def detect_and_point_target(tar):
+    if tar == 1:
+        return rm_define.marker_number_one
+    elif tar == 2:
+        return rm_define.marker_number_two
+    elif tar == 3:
+        return rm_define.marker_number_three
+    elif tar == 4:
+        return rm_define.marker_number_four
+    elif tar == 5:
+        return rm_define.marker_number_five
+
+
+def find_target(tar):
+    vision_ctrl.detect_marker_and_aim(detect_and_point_target(tar))
+    storeList(tar)
+
+
+
+###MAIN
+start()
+
+
+###find targets
+for target in TargetList:
+    print(target)
+    find_target(target)
+    gimbal_ctrl.angle_ctrl(0,0)
+print(TargetPos)
+
+
+###shoot targets
+led_ctrl.set_top_led(rm_define.armor_top_all,255,0,0,rm_define.effect_always_on)
+gimbal_ctrl.set_rotate_speed(180)
+
+for target in TargetList:
+    gimbal_ctrl.angle_ctrl(TargetPos[target][0],TargetPos[target][1])
+    led_ctrl.gun_led_on()
+    time.sleep(0.1)
+    gun_ctrl.fire_once()
+    led_ctrl.gun_led_off()
+    time.sleep(0.2)
+
+gimbal_ctrl.angle_ctrl(0,0)
+led_ctrl.set_top_led(rm_define.armor_top_all,255,0,0,rm_define.effect_marquee)
+time.sleep(1)
+
+
+led_ctrl.set_top_led(rm_define.armor_top_all,0,125,200,rm_define.effect_always_on)
